@@ -1,0 +1,35 @@
+name: Build CloudStream extension
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: android-actions/setup-android@v3
+      - name: Build extension and catalogue
+        run: |
+          chmod +x gradlew
+          ./gradlew BroStreamByFaz:make makePluginsJson
+          mkdir public
+          cp EpornerGay/build/*.cs3 public/
+          cp build/plugins.json public/
+          cp repo.json public/
+      - name: Publish builds branch
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_branch: builds
+          publish_dir: ./public
+          force_orphan: true
