@@ -4,15 +4,33 @@ BroStream by Faz is an unofficial, adults-only CloudStream extension focused on 
 
 > **Adults only (18+).** This project does not host videos. Availability depends on the external websites, your country, and your network. Only use it where doing so is lawful. The pictures below are illustrations; the wording on your CloudStream screen may be slightly different.
 
-## The link you need
+## The easy link you need
 
-Copy this complete repository link:
+Use this short link on a television:
 
 ```text
-https://raw.githubusercontent.com/efczpaclasses-boop/brostream-by-faz/builds/repo.json
+https://tinyurl.com/29wpnd6v
 ```
 
-Do not remove any letters, slashes, or dots from the link.
+It redirects to the official BroStream by Faz repository file. Do not add spaces or remove any characters.
+
+You can also scan this QR code with a phone to open and copy the short link:
+
+![QR code for the BroStream by Faz short installation link](assets/install-qr.png)
+
+### Easier typing with a Google TV or Chromecast
+
+1. Install or open the **Google TV** app on your phone.
+
+2. Select **TV Remote** in the Google TV app.
+
+3. Connect the remote to your television.
+
+4. Open the repository URL box in CloudStream on the television.
+
+5. Select the keyboard icon in the phone remote.
+
+6. Paste `https://tinyurl.com/29wpnd6v` using your phone.
 
 ## Install BroStream by Faz
 
@@ -34,10 +52,10 @@ Do not remove any letters, slashes, or dots from the link.
 
 6. Select the box marked **Repository URL** or **Repository link**.
 
-7. Paste this complete link into that box:
+7. Enter this short link into that box:
 
    ```text
-   https://raw.githubusercontent.com/efczpaclasses-boop/brostream-by-faz/builds/repo.json
+   https://tinyurl.com/29wpnd6v
    ```
 
 8. Select **Add repository**, **Add**, or **Save**. You should now see **BroStream by Faz** in the repository list.
@@ -68,7 +86,13 @@ Do not remove any letters, slashes, or dots from the link.
 
 4. Restart CloudStream completely.
 
-5. Check the repository link carefully if it still does not appear. It must end with `/builds/repo.json`.
+5. Check the short link carefully if it still does not appear. It must be exactly `https://tinyurl.com/29wpnd6v`.
+
+6. If the short link is unavailable, use this full backup link:
+
+   ```text
+   https://raw.githubusercontent.com/efczpaclasses-boop/brostream-by-faz/builds/repo.json
+   ```
 
 ## Updates
 
