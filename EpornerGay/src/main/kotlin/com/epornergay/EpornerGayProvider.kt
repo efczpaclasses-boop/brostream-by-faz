@@ -37,59 +37,35 @@ class EpornerGayProvider : MainAPI() {
     )
 
     override val mainPage = mainPageOf(
-        "FX|/?s=muscle+daddy+bear+gay+men" to "🔥 Manly Men — New",
-        "FX|/tag/amateur-gay-porn/" to "🏠 Real Amateur & Homemade",
-        "FX|/?s=daddy+bear+hairy+gay+men" to "🐻 Daddies, Bears & Hairy Men",
-        "FX|/?s=muscle+jock+hunk+gay+men" to "💪 Muscle & Jocks",
-        "FX|/tag/straight-guys-gay-porn/" to "Straight Guys — Gay Only",
-        "FX|/tag/big-dick-gay-porn/" to "Big Dick",
-        "FX|/tag/bareback-gay-porn/" to "Bareback",
-        "FX|/tag/group-gay-porn/" to "Group & Orgies",
-        "FX|/category/gay-only-fans/" to "🎥 Creator-Made & OnlyFans",
-        "FX|/?s=solo" to "Solo Men — Non-Studio",
-        "FX|/?s=homemade" to "Real Couples — Non-Studio",
-        "FX|/?s=outdoor" to "Outdoor & Public — Non-Studio",
-        Feed.FRESH.name to "Fresh Gay Men — All Sources",
-        Feed.AMATEUR.name to "More Amateur Men",
-        "FX|/?s=brazilian+gay+men" to "Brazilian Men",
-        "FX|/?s=latino+gay+men" to "Latino Men",
-        "FX|/?s=indian+gay+men" to "Indian Men",
-        "FX|/?s=best+gay+blowjob" to "Hottest Blowjobs",
-        "FX|/?s=gay+cum+compilation" to "Cum Compilations",
-        "FX|/?s=rough+gay+blowjob" to "Rough Blowjobs",
-        "FX|/?s=loud+moaning+gay+blowjob" to "Loud Moaning Blowjobs",
+        Feed.FRESH.name to "🔥 Fresh Gay Men",
+        "BFK|hunk,muscle,jock,stud" to "🔥 Manly Men & Hunks",
+        "BFK|amateur,homemade,home made" to "🏠 Real Amateur & Homemade",
+        "BFK|daddy,daddies,older man,mature man" to "🐻 Daddies",
+        "BFK|bear,hairy,cub" to "🐻 Bears & Hairy Men",
+        "BFK|muscle,muscled,muscular,bodybuilder" to "💪 Muscle Men",
+        "BFK|jock,athlete,football player" to "Jocks",
+        "BFK|straight guy,curious guy,first time" to "Straight & Curious — Gay Only",
+        "BFK|big cock,big dick,huge cock,huge dick" to "Big Dick",
+        "BFK|bareback,raw sex,breed" to "Bareback",
+        "BFK|group sex,gangbang,orgy,threesome" to "Group & Orgies",
+        "BFK|creator,onlyfans,justforfans,jff" to "🎥 Creator-Made",
+        "BFK|solo,jerking,wanking,masturbat" to "Solo Men — Non-Studio",
+        "BFK|outdoor,public,park,beach" to "Outdoor & Public",
+        "BFK|brazil,brazilian,latino,latin,cuban,mexican" to "Brazilian & Latino Men",
+        "BFK|indian,desi" to "Indian Men",
+        "BFK|blowjob,sucking cock,suck dick,oral" to "Hottest Blowjobs",
+        "BFK|cumshot,cumming,cumpilation,cum compilation,load" to "Cum Compilations",
+        "BFK|rough,hardcore,dominat" to "Rough & Hardcore",
+        "BFK|gloryhole,glory hole" to "Gloryholes",
+        "BFK|pov,point of view" to "POV",
+        "BFK|massage,masseur" to "Massage",
         Feed.TOP.name to "Popular Gay Men",
         Feed.LONG.name to "Long Gay Videos",
-        Feed.BOYFRIEND.name to "BoyfriendTV",
-        Feed.TRENDY.name to "TrendyPorn Gay",
-        Feed.PORNONE.name to "PornOne Gay",
-        "FX|/?filter=latest/" to "FXGGXT — Latest Gay",
-        "FX|/tag/hunk-gay-porn-videos/" to "Hunks",
-        "FX|/tag/interracial-gay-porn/" to "Interracial",
-        "FX|/tag/muscle-gay-porn/" to "Muscle",
-        "FX|/tag/twink-gay-porn/" to "Twinks",
-        "FX|/category/adulttime/" to "AdultTime",
-        "FX|/category/asgmax/" to "ASGmax",
-        "FX|/category/?s=bareback%2B" to "Bareback+",
-        "FX|/category/bel-ami/" to "Bel Ami",
-        "FX|/category/breederbros/" to "Breeder Bros",
-        "FX|/category/clubbangboys/" to "Club Bang Boys",
-        "FX|/category/cocksuremen/" to "Cock Sure Men",
-        "FX|/category/cocky-boys/" to "Cocky Boys",
-        "FX|/category/corbin-fisher/" to "Corbin Fisher",
-        "FX|/category/creamybros/" to "Creamy Bros",
-        "FX|/category/cumdumpsluts/" to "Cumdump Sluts",
-        "FX|/category/ericvideos/" to "Eric Videos",
-        "FX|/category/facedownassup/" to "Face Down Ass Up",
-        "FX|/category/fraternity-x/" to "Fraternity X",
-        "FX|/category/just-for-fans/" to "JustForFans",
-        "FX|/category/kristenbjorn/" to "Kristen Bjorn",
-        "FX|/category/falcon-studios/" to "Falcon Studios",
-        "FX|/category/gay-only-fans/" to "Gay OnlyFans",
-        "FX|/category/treasure-island-media/" to "Treasure Island Media",
-        "FX|/category/slamrush/" to "Slam Rush",
-        "FX|/category/seehimfuck/" to "See Him Fuck",
-        "FX|/category/voyr/" to "VOYR",
+        "BFK|twink,young guy,young man" to "Twinks",
+        "BFK|interracial" to "Interracial",
+        "BFK|asian,japanese,korean,chinese,thai,filipino,pinoy" to "Asian Men",
+        "BFK|mature man,older man,daddy,grandpa" to "Mature Men",
+        "BFK|uncut,foreskin" to "Uncut Men",
     )
 
     override suspend fun getMainPage(page: Int, request: MainPageRequest): HomePageResponse {
@@ -103,6 +79,16 @@ class EpornerGayProvider : MainAPI() {
         }
         if (request.data.startsWith("BF|")) {
             val items = boyfriendTv(page, "latest", request.data.removePrefix("BF|"))
+                .filter(::isMenOnly).distinctBy(::dedupeKey)
+            return newHomePageResponse(
+                HomePageList(request.name, items.map { it.toSearchResponse() }, true),
+                hasNext = items.isNotEmpty(),
+            )
+        }
+        if (request.data.startsWith("BFK|")) {
+            val keywords = request.data.removePrefix("BFK|").split(',')
+                .map { it.trim().lowercase() }.filter { it.isNotBlank() }
+            val items = boyfriendKeyword(page, keywords)
                 .filter(::isMenOnly).distinctBy(::dedupeKey)
             return newHomePageResponse(
                 HomePageList(request.name, items.map { it.toSearchResponse() }, true),
@@ -127,11 +113,9 @@ class EpornerGayProvider : MainAPI() {
     }
 
     private suspend fun aggregate(page: Int, order: String, query: String): List<ItemData> {
-        val sources = when {
-            query != "all" -> listOf(Source.BOYFRIEND, Source.FXGGXT)
-            order != "latest" -> listOf(Source.BOYFRIEND, Source.FXGGXT)
-            else -> listOf(Source.BOYFRIEND, Source.FXGGXT, Source.TRENDY, Source.PORNONE)
-        }
+        // Only BoyfriendTV is used for visible aggregate rows. It is a dedicated
+        // gay-men catalogue; the broader feeds occasionally leak female content.
+        val sources = listOf(Source.BOYFRIEND)
         val lists = sources.amap { source ->
             runCatching {
                 when (source) {
@@ -151,7 +135,12 @@ class EpornerGayProvider : MainAPI() {
     }
 
     private suspend fun boyfriendTv(page: Int, order: String, query: String): List<ItemData> {
-        val url = if (query != "all") {
+        val url = if (query.startsWith("/")) {
+            val path = query.substringBefore("?")
+            val existingQuery = query.substringAfter("?", "")
+            val separator = if (existingQuery.isBlank()) "?" else "?${existingQuery}&"
+            "$mainUrl${path}${separator}page=$page"
+        } else if (query != "all") {
             "$mainUrl/search/?q=${URLEncoder.encode(query, "UTF-8")}&page=$page"
         } else {
             val sort = when (order) {
@@ -168,6 +157,17 @@ class EpornerGayProvider : MainAPI() {
             val href = absolute(a.attr("href"), mainUrl) ?: return@mapNotNull null
             val poster = el.selectFirst("img[src]")?.attr("src")
             if (title.isBlank()) null else ItemData(Source.BOYFRIEND.name, href, title, poster)
+        }
+    }
+
+    private suspend fun boyfriendKeyword(page: Int, keywords: List<String>): List<ItemData> {
+        val first = ((page - 1).coerceAtLeast(0) * 5) + 1
+        val pages = (first until first + 5).toList().amap { sourcePage ->
+            runCatching { boyfriendTv(sourcePage, "latest", "all") }.getOrDefault(emptyList())
+        }.flatten()
+        return pages.filter { item ->
+            val title = item.title.lowercase()
+            keywords.any(title::contains)
         }
     }
 
@@ -255,7 +255,9 @@ class EpornerGayProvider : MainAPI() {
     }
 
     override suspend fun search(query: String): List<SearchResponse> {
-        return aggregate(1, "latest", query).filter(::isMenOnly).distinctBy(::dedupeKey)
+        val keywords = query.lowercase().split(Regex("\\s+"))
+            .map { it.trim() }.filter { it.length > 1 }
+        return boyfriendKeyword(1, keywords).filter(::isMenOnly).distinctBy(::dedupeKey)
             .map { it.toSearchResponse() }
     }
 
@@ -405,10 +407,16 @@ class EpornerGayProvider : MainAPI() {
             "mother", "wife", "wives", "daughter", "sister", "girlfriend", "bride", "babe",
             "bitch", "chick", "lady", "ladies", "pussy", "vagina", "clit", "tits", "boobs",
             "breasts", "pregnant", "shemale", "trans", "tranny", "futa", "straight couple",
+            "stepmom", "step mom", "stepdaughter", "step daughter", "schoolgirl", "school girl",
+            "cougar", "granny", "boy and girl", "guy and girl", "man and woman",
         )
         if (item.url.isBlank() || item.title.isBlank() || excluded.any(text::contains)) return false
-
-        return true
+        val maleSignals = listOf(
+            " man", "men ", " male", " guy", "guys", " boy", "boys", " gay", " cock", "dick",
+            " daddy", "daddies", " bear", " cub", " hunk", " stud", " jock", " twink", "bro ",
+            " brother", "him ", " his ", " he ", "jerk", "wank", "masturbat",
+        )
+        return maleSignals.any(text::contains)
     }
 
     private fun dedupeKey(item: ItemData): String {
