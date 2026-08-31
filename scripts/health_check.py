@@ -17,10 +17,10 @@ USER_AGENT = (
 )
 
 CHECKS = (
-    ("BoyfriendTV", "https://www.boyfriendtv.com/?sort=mr&page=1", rb"mtile-x7"),
-    ("FXGGXT", "https://fxggxt.com/?filter=latest/", rb"loop-video[^>]*thumb-block|thumb-block[^>]*loop-video"),
-    ("TrendyPorn", "https://www.trendyporn.com/channels/21/gay/page1.html", rb"well-sm"),
-    ("PornOne", "https://pornone.com/gay/1", rb"popbop[^>]*vidLinkFX|vidLinkFX[^>]*popbop"),
+    ("Gay0Day catalogue", "https://gay0day.com/categories/gay/", rb"/videos/[0-9]+/"),
+    ("Gay0Day amateur", "https://gay0day.com/categories/amateur/", rb"/videos/[0-9]+/"),
+    ("Gay0Day blowjob", "https://gay0day.com/categories/blowjob/", rb"/videos/[0-9]+/"),
+    ("Gay0Day playback", "https://gay0day.com/videos/29816/hot-school-gay-boy-sex-first-time-i-let-it-sit-there-for-a-bit-and-when-i-did-pull-off/", rb"<source[^>]+(?:mp4|m3u8)"),
 )
 
 
