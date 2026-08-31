@@ -158,6 +158,11 @@ class EpornerGayProvider : MainAPI() {
         val lists = sources.amap { source ->
             runCatching {
                 when (source) {
+                    Source.GAY0DAY -> gay0day(
+                        page,
+                        if (query == "all") "/categories/gay/"
+                        else "/search/${query.lowercase().replace(Regex("[^a-z0-9]+"), "-").trim('-')}/"
+                    )
                     Source.EPORNER -> eporner(page, order, query)
                     Source.BOYFRIEND -> boyfriendTv(page, order, query)
                     Source.PORNHUB -> pornHub(page, order, query)
