@@ -6,6 +6,7 @@ import com.lagradost.cloudstream3.amap
 import com.lagradost.cloudstream3.utils.*
 import org.json.JSONArray
 import org.json.JSONObject
+import java.math.BigInteger
 import java.net.URI
 import java.net.URLEncoder
 
@@ -27,48 +28,59 @@ class EpornerGayProvider : MainAPI() {
     private val pornHubCookies = mapOf("hasVisited" to "1", "accessAgeDisclaimerPH" to "1", "platform" to "pc")
 
     private enum class Feed { FRESH, AMATEUR, TOP, LONG, BOYFRIEND, TRENDY, PORNONE }
-    private enum class Source { BOYFRIEND, PORNHUB, TRENDY, PORNONE, FXGGXT }
+    private enum class Source { EPORNER, BOYFRIEND, PORNHUB, TRENDY, PORNONE, FXGGXT }
 
     data class ItemData(
         val source: String = "",
         val url: String = "",
         val title: String = "",
         val poster: String? = null,
+        val keywords: String = "",
     )
 
     override val mainPage = mainPageOf(
-        Feed.FRESH.name to "🔥 Fresh Gay Men",
-        "BFK|hunk,muscle,jock,stud" to "🔥 Manly Men & Hunks",
-        "BFK|amateur,homemade,home made" to "🏠 Real Amateur & Homemade",
-        "BFK|daddy,daddies,older man,mature man" to "🐻 Daddies",
-        "BFK|bear,hairy,cub" to "🐻 Bears & Hairy Men",
-        "BFK|muscle,muscled,muscular,bodybuilder" to "💪 Muscle Men",
-        "BFK|jock,athlete,football player" to "Jocks",
-        "BFK|straight guy,curious guy,first time" to "Straight & Curious — Gay Only",
-        "BFK|big cock,big dick,huge cock,huge dick" to "Big Dick",
-        "BFK|bareback,raw sex,breed" to "Bareback",
-        "BFK|group sex,gangbang,orgy,threesome" to "Group & Orgies",
-        "BFK|creator,onlyfans,justforfans,jff" to "🎥 Creator-Made",
-        "BFK|solo,jerking,wanking,masturbat" to "Solo Men — Non-Studio",
-        "BFK|outdoor,public,park,beach" to "Outdoor & Public",
-        "BFK|brazil,brazilian,latino,latin,cuban,mexican" to "Brazilian & Latino Men",
-        "BFK|indian,desi" to "Indian Men",
-        "BFK|blowjob,sucking cock,suck dick,oral" to "Hottest Blowjobs",
-        "BFK|cumshot,cumming,cumpilation,cum compilation,load" to "Cum Compilations",
-        "BFK|rough,hardcore,dominat" to "Rough & Hardcore",
-        "BFK|gloryhole,glory hole" to "Gloryholes",
-        "BFK|pov,point of view" to "POV",
-        "BFK|massage,masseur" to "Massage",
-        Feed.TOP.name to "Popular Gay Men",
-        Feed.LONG.name to "Long Gay Videos",
-        "BFK|twink,young guy,young man" to "Twinks",
-        "BFK|interracial" to "Interracial",
-        "BFK|asian,japanese,korean,chinese,thai,filipino,pinoy" to "Asian Men",
-        "BFK|mature man,older man,daddy,grandpa" to "Mature Men",
-        "BFK|uncut,foreskin" to "Uncut Men",
+        "EP|latest|gay" to "🔥 Fresh Gay Men",
+        "EP|latest|hunk" to "🔥 Manly Men & Hunks",
+        "EP|latest|amateur" to "🏠 Real Amateur & Homemade",
+        "EP|latest|daddy" to "🐻 Daddies",
+        "EP|latest|bear" to "🐻 Bears & Hairy Men",
+        "EP|latest|muscle" to "💪 Muscle Men",
+        "EP|latest|jock" to "Jocks",
+        "EP|latest|straight" to "Straight & Curious — Gay Only",
+        "EP|latest|big cock" to "Big Dick",
+        "EP|latest|bareback" to "Bareback",
+        "EP|latest|gangbang" to "Group & Orgies",
+        "EP|latest|onlyfans" to "🎥 Creator-Made",
+        "EP|latest|solo" to "Solo Men — Non-Studio",
+        "EP|latest|outdoor" to "Outdoor & Public",
+        "EP|latest|brazilian" to "Brazilian Men",
+        "EP|latest|latino" to "Latino Men",
+        "EP|latest|indian" to "Indian Men",
+        "EP|latest|blowjob" to "Hottest Blowjobs",
+        "EP|latest|cumshot" to "Cum Compilations",
+        "EP|latest|rough" to "Rough & Hardcore",
+        "EP|latest|gloryhole" to "Gloryholes",
+        "EP|latest|pov" to "POV",
+        "EP|latest|massage" to "Massage",
+        "EP|top-weekly|gay" to "Popular Gay Men",
+        "EP|longest|gay" to "Long Gay Videos",
+        "EP|latest|twink" to "Twinks",
+        "EP|latest|interracial" to "Interracial",
+        "EP|latest|asian" to "Asian Men",
+        "EP|latest|mature" to "Mature Men",
+        "EP|latest|uncut" to "Uncut Men",
     )
 
     override suspend fun getMainPage(page: Int, request: MainPageRequest): HomePageResponse {
+        if (request.data.startsWith("EP|")) {
+            val parts = request.data.split('|', limit = 3)
+            val items = eporner(page, parts.getOrElse(1) { "latest" }, parts.getOrElse(2) { "gay" })
+                .filter(::isMenOnly).distinctBy(::dedupeKey)
+            return newHomePageResponse(
+                HomePageList(request.name, items.map { it.toSearchResponse() }, true),
+                hasNext = items.isNotEmpty(),
+            )
+        }
         if (request.data.startsWith("FX|")) {
             val items = fxggxt(page, request.data.removePrefix("FX|"))
                 .filter(::isMenOnly).distinctBy(::dedupeKey)
@@ -132,6 +144,22 @@ class EpornerGayProvider : MainAPI() {
             }.getOrDefault(emptyList())
         }
         return interleave(lists)
+    }
+
+    private suspend fun eporner(page: Int, order: String, query: String): List<ItemData> {
+        val encoded = URLEncoder.encode(query, "UTF-8")
+        val url = "https://www.eporner.com/api/v2/video/search/?query=$encoded" +
+            "&per_page=40&page=$page&order=$order&gay=1&lq=1"
+        val response = mapper.readValue(app.get(url, headers = headers, timeout = 30).text, EpornerSearchResponse::class.java)
+        return response.videos.mapNotNull { video ->
+            if (video.url.isBlank() || video.title.isBlank()) null else ItemData(
+                source = Source.EPORNER.name,
+                url = video.url,
+                title = video.title,
+                poster = video.defaultThumb?.src,
+                keywords = video.keywords,
+            )
+        }
     }
 
     private suspend fun boyfriendTv(page: Int, order: String, query: String): List<ItemData> {
@@ -255,9 +283,7 @@ class EpornerGayProvider : MainAPI() {
     }
 
     override suspend fun search(query: String): List<SearchResponse> {
-        val keywords = query.lowercase().split(Regex("\\s+"))
-            .map { it.trim() }.filter { it.length > 1 }
-        return boyfriendKeyword(1, keywords).filter(::isMenOnly).distinctBy(::dedupeKey)
+        return eporner(1, "latest", query).filter(::isMenOnly).distinctBy(::dedupeKey)
             .map { it.toSearchResponse() }
     }
 
@@ -272,6 +298,7 @@ class EpornerGayProvider : MainAPI() {
 
     private val ItemData.sourceLabel: String
         get() = when (source) {
+            Source.EPORNER.name -> "EP"
             Source.BOYFRIEND.name -> "BF"
             Source.PORNHUB.name -> "PH"
             Source.TRENDY.name -> "TP"
@@ -309,12 +336,41 @@ class EpornerGayProvider : MainAPI() {
     ): Boolean {
         val item = parseItem(data) ?: return false
         return when (runCatching { Source.valueOf(item.source) }.getOrNull()) {
+            Source.EPORNER -> loadEporner(item.url, callback)
             Source.BOYFRIEND -> loadBoyfriendTv(item.url, callback)
             Source.PORNHUB -> loadPornHub(item.url, callback)
             Source.TRENDY -> loadSimpleVideo(item, "source", callback)
             Source.PORNONE -> loadSimpleVideo(item, "#pornone-video-player source", callback)
             Source.FXGGXT -> loadFxggxt(item.url, subtitleCallback, callback)
             null -> false
+        }
+    }
+
+    private suspend fun loadEporner(url: String, callback: (ExtractorLink) -> Unit): Boolean {
+        val page = app.get(url, headers = headers, timeout = 30).text
+        val videoId = Regex("EP\\.video\\.player\\.vid\\s*=\\s*'([^']+)'")
+            .find(page)?.groupValues?.get(1) ?: return false
+        val hash = Regex("EP\\.video\\.player\\.hash\\s*=\\s*'([^']+)'")
+            .find(page)?.groupValues?.get(1) ?: return false
+        val xhr = "https://www.eporner.com/xhr/video/$videoId?hash=${base36(hash)}"
+        val sources = JSONObject(app.get(xhr, referer = url, headers = headers).text)
+            .optJSONObject("sources")?.optJSONObject("mp4") ?: return false
+        var emitted = false
+        val qualities = sources.keys()
+        while (qualities.hasNext()) {
+            val source = sources.optJSONObject(qualities.next()) ?: continue
+            val stream = source.optString("src")
+            if (!stream.startsWith("http")) continue
+            emitLink("Eporner", source.optString("labelShort", "HD"), stream, url, false, callback)
+            emitted = true
+        }
+        return emitted
+    }
+
+    private fun base36(hash: String): String {
+        require(hash.length >= 32)
+        return (0 until 4).joinToString("") { index ->
+            BigInteger(hash.substring(index * 8, index * 8 + 8), 16).toString(36)
         }
     }
 
@@ -401,7 +457,7 @@ class EpornerGayProvider : MainAPI() {
     }
 
     private fun isMenOnly(item: ItemData): Boolean {
-        val text = " ${item.title.lowercase()} "
+        val text = " ${item.title.lowercase()} ${item.keywords.lowercase()} "
         val excluded = listOf(
             "lesbian", " girl", "girls", "woman", "women", "female", "milf", "mom ", "mommy",
             "mother", "wife", "wives", "daughter", "sister", "girlfriend", "bride", "babe",

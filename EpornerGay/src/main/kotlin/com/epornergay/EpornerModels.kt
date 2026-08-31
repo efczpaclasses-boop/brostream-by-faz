@@ -15,6 +15,7 @@ data class EpornerVideo(
     val id: String = "",
     val title: String = "",
     val url: String = "",
+    val keywords: String = "",
     val views: Long = 0,
     val rate: Double = 0.0,
     @JsonProperty("length_sec") val lengthSeconds: Int = 0,
