@@ -131,6 +131,7 @@ class EpornerGayProvider : MainAPI() {
         val lists = sources.amap { source ->
             runCatching {
                 when (source) {
+                    Source.EPORNER -> eporner(page, order, query)
                     Source.BOYFRIEND -> boyfriendTv(page, order, query)
                     Source.PORNHUB -> pornHub(page, order, query)
                     Source.TRENDY -> trendy(page, query)
