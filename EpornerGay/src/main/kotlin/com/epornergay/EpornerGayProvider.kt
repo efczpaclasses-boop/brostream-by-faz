@@ -28,7 +28,7 @@ class EpornerGayProvider : MainAPI() {
     private val pornHubCookies = mapOf("hasVisited" to "1", "accessAgeDisclaimerPH" to "1", "platform" to "pc")
 
     private enum class Feed { FRESH, AMATEUR, TOP, LONG, BOYFRIEND, TRENDY, PORNONE }
-    private enum class Source { GAYPORNTUBE, GAY0DAY, EPORNER, BOYFRIEND, PORNHUB, TRENDY, PORNONE, FXGGXT }
+    private enum class Source { CURATED, GAYPORNTUBE, GAY0DAY, EPORNER, BOYFRIEND, PORNHUB, TRENDY, PORNONE, FXGGXT }
 
     data class ItemData(
         val source: String = "",
@@ -41,6 +41,7 @@ class EpornerGayProvider : MainAPI() {
     override val mainPage = mainPageOf(
         "GPT|/most-viewed/" to "🔥 Most Watched Gay Men",
         "GPT|/channels/5/amature/page1.html" to "🏠 Fresh Amateur Today",
+        "CURATED" to "⭐ MyVidster Gay-Men Picks",
         "GPT|/search/videos/homemade/page1.html" to "🎥 Homemade & Non-Studio",
         "GPT|/channels/16/latino/page1.html" to "🌶️ Latino Men",
         "GPT|/search/videos/brazilian/page1.html" to "🇧🇷 Brazilian Men",
@@ -68,6 +69,14 @@ class EpornerGayProvider : MainAPI() {
     )
 
     override suspend fun getMainPage(page: Int, request: MainPageRequest): HomePageResponse {
+        if (request.data == "CURATED") {
+            val items = myVidsterPicks.drop((page - 1) * 20).take(20)
+                .filter(::isMenOnly).distinctBy(::dedupeKey)
+            return newHomePageResponse(
+                HomePageList(request.name, items.map { it.toSearchResponse() }, false),
+                hasNext = page * 20 < myVidsterPicks.size,
+            )
+        }
         if (request.data.startsWith("GPT|")) {
             val items = gayPornTube(page, request.data.removePrefix("GPT|"))
                 .filter(::isMenOnly).distinctBy(::dedupeKey)
@@ -136,6 +145,20 @@ class EpornerGayProvider : MainAPI() {
         )
     }
 
+    private val myVidsterPicks = listOf(
+        ItemData(Source.CURATED.name, "https://www.xvideos.com/video.hoeabkmf390/danish_boy_and_gay_pornstar_frederik_known_from_6mag.dk_-_10", "Danish gay performer Frederik", "https://cdn2.myvidster.com/user/thumbs/e9e4cc891049f85139491c23bd14c5b7_1.jpg", "gay boy male"),
+        ItemData(Source.CURATED.name, "https://xhamster.com/movies/2248475/we_should_hang_at_my_place_sometime..html", "Cade's Anal Awakening", "https://cdn2.myvidster.com/user/images/20July2014/320876/1070396135_1.jpg", "gay men male"),
+        ItemData(Source.CURATED.name, "https://www.gayfuror.com/video/three-gorgeous-boys/", "Three Gorgeous Guys", "https://cdn2.myvidster.com/user/images/20August2015/5508/1536070777_1.jpg", "gay boys male"),
+        ItemData(Source.CURATED.name, "https://www.boyfriendtv.com/videos/40021/extraordinary-group-sex-with-lots-of-cum.html", "Gay Group Session", "https://cdn2.myvidster.com/user/images/29September2014/27849/249233468_1.jpg", "gay men group"),
+        ItemData(Source.CURATED.name, "https://thisvid.com/videos/daddy-fucks-his-boy-in-the-car/", "Daddy and Guy in the Car", "https://cdn2.myvidster.com/user/thumbs/cc326e183949aeaa09b9fd3e47a0c9f1_1.jpg", "gay daddy boy male"),
+        ItemData(Source.CURATED.name, "https://streamtape.com/v/zXADomOxXGIgvj/", "Charlie Roberts and Marcus Ruhl", "https://cdn2.myvidster.com/user/thumbs/51046ea71d9c00a506fb7969197cedbb_1.jpg", "gay men male"),
+        ItemData(Source.CURATED.name, "https://vidara.to/v/Fc5O8LET114iE", "Aingeru — Masculine Guy", "https://cdn2.myvidster.com/user/thumbs/de10232e1c4db5d6155235e536f25b65_1.jpg", "gay masculine man blowjob"),
+        ItemData(Source.CURATED.name, "https://luluvid.com/jm4pza21axea", "Twink with Two Tall Guys", "https://cdn2.myvidster.com/user/thumbs/112f6ddacde2224ed5a8df6a6415515d_1.jpg", "gay twink men guys"),
+        ItemData(Source.CURATED.name, "https://thisvid.com/videos/young-latino-boy-getting-serviced-until-cumming/", "Latino Guy Getting Serviced", "https://cdn2.myvidster.com/user/thumbs/f96fcc90016f57b0feacef68ffb1501d_1.jpg", "gay latino boy male"),
+        ItemData(Source.CURATED.name, "https://veev.to/d/6f4arg9x0f6n", "Aingeru — Oral, Solo and Anal", "https://cdn2.myvidster.com/user/thumbs/25c74b04100a307de8cc5efed257b8b3_1.jpg", "gay masculine man blowjob"),
+        ItemData(Source.CURATED.name, "https://streamtape.com/v/3pRvAZx9kjFdBdq/", "Cum Play with Two Men", "https://cdn2.myvidster.com/user/thumbs/ebaec728e39abcd5f281d1c693e324e6_1.jpg", "gay men male"),
+    )
+
     private suspend fun gayPornTube(page: Int, path: String): List<ItemData> {
         val pagedPath = when {
             path.contains("page1.html") -> path.replace("page1.html", "page$page.html")
@@ -178,6 +201,7 @@ class EpornerGayProvider : MainAPI() {
         val lists = sources.amap { source ->
             runCatching {
                 when (source) {
+                    Source.CURATED -> myVidsterPicks
                     Source.GAYPORNTUBE -> gayPornTube(
                         page,
                         if (query == "all") "/most-viewed/"
@@ -358,6 +382,7 @@ class EpornerGayProvider : MainAPI() {
 
     private val ItemData.sourceLabel: String
         get() = when (source) {
+            Source.CURATED.name -> "MV"
             Source.GAYPORNTUBE.name -> "GPT"
             Source.GAY0DAY.name -> "G0"
             Source.EPORNER.name -> "EP"
@@ -374,6 +399,12 @@ class EpornerGayProvider : MainAPI() {
 
     override suspend fun load(url: String): LoadResponse? {
         val item = parseItem(url) ?: return null
+        if (item.source == Source.CURATED.name) {
+            return newMovieLoadResponse(item.title, url, TvType.NSFW, url) {
+                posterUrl = item.poster
+                tags = listOf("Gay Men", "Curated", "MyVidster Pick")
+            }
+        }
         val cookies = if (item.source == Source.PORNHUB.name) pornHubCookies else emptyMap()
         val document = app.get(item.url, headers = headers, cookies = cookies).document
         val title = document.selectFirst("meta[property=og:title]")?.attr("content")
@@ -398,6 +429,10 @@ class EpornerGayProvider : MainAPI() {
     ): Boolean {
         val item = parseItem(data) ?: return false
         return when (runCatching { Source.valueOf(item.source) }.getOrNull()) {
+            Source.CURATED -> {
+                runCatching { loadExtractor(item.url, item.url, subtitleCallback, callback) }
+                    .isSuccess
+            }
             Source.GAYPORNTUBE -> loadGayPornTube(item.url, callback)
             Source.GAY0DAY -> loadGay0Day(item.url, callback)
             Source.EPORNER -> loadEporner(item.url, callback)
@@ -567,7 +602,7 @@ class EpornerGayProvider : MainAPI() {
             "cougar", "granny", "boy and girl", "guy and girl", "man and woman",
         )
         if (item.url.isBlank() || item.title.isBlank() || excluded.any(text::contains)) return false
-        if (item.source == Source.GAYPORNTUBE.name || item.source == Source.GAY0DAY.name) return true
+        if (item.source == Source.CURATED.name || item.source == Source.GAYPORNTUBE.name || item.source == Source.GAY0DAY.name) return true
         val maleSignals = listOf(
             " man", "men ", " male", " guy", "guys", " boy", "boys", " gay", " cock", "dick",
             " daddy", "daddies", " bear", " cub", " hunk", " stud", " jock", " twink", "bro ",
