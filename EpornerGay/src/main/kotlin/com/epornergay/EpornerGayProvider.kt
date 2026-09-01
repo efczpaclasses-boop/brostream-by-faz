@@ -9,6 +9,7 @@ import org.json.JSONObject
 import java.math.BigInteger
 import java.net.URI
 import java.net.URLEncoder
+import java.util.Calendar
 
 class EpornerGayProvider : MainAPI() {
     override var mainUrl = "https://gay0day.com"
@@ -22,13 +23,17 @@ class EpornerGayProvider : MainAPI() {
     override val vpnStatus = VPNStatus.MightBeNeeded
 
     private val mapper = jacksonObjectMapper()
+    private val cataloguePageSize = 120
     private val userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) " +
         "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36"
     private val headers = mapOf("User-Agent" to userAgent, "Accept" to "text/html,application/xhtml+xml")
     private val pornHubCookies = mapOf("hasVisited" to "1", "accessAgeDisclaimerPH" to "1", "platform" to "pc")
+    private val seenBrowseKeys = mutableSetOf<String>()
 
     private enum class Feed { FRESH, AMATEUR, TOP, LONG, BOYFRIEND, TRENDY, PORNONE }
     private enum class Source { GAY0DAY, EPORNER, BOYFRIEND, PORNHUB, TRENDY, PORNONE, FXGGXT }
+    private enum class Mix { DAILY, QUICK, MEDIUM, LONG, MARATHON, SURPRISE }
+    private enum class Collection { ENERGY, COZY, PLAYFUL, WORLD }
 
     data class ItemData(
         val source: String = "",
@@ -36,9 +41,20 @@ class EpornerGayProvider : MainAPI() {
         val title: String = "",
         val poster: String? = null,
         val keywords: String = "",
+        val durationSeconds: Int? = null,
     )
 
     override val mainPage = mainPageOf(
+        "MIX|DAILY" to "✨ Today's Mix",
+        "MIX|QUICK" to "⚡ Short & Sweet — Under 10 Minutes",
+        "MIX|MEDIUM" to "⏱️ Settling In — 10 to 20 Minutes",
+        "MIX|LONG" to "🛋️ Stay Awhile — 20+ Minutes",
+        "MIX|MARATHON" to "🏆 All Night — 45+ Minutes",
+        "MIX|SURPRISE" to "🎲 Pick For Me — Daily Surprise",
+        "COLLECTION|ENERGY" to "💪 Bring the Energy — Muscles, Jocks & Outdoors",
+        "COLLECTION|COZY" to "🐻 Keep It Cozy — Daddies, Bears & Hairy Men",
+        "COLLECTION|PLAYFUL" to "🎉 Keep It Playful — Twinks, Amateurs & Solo",
+        "COLLECTION|WORLD" to "🌍 Go Somewhere — Latino, Asian & Brazilian",
         "G0|/categories/gay/" to "🔥 Fresh Gay Men",
         "G0|/categories/hunk/" to "🔥 Hot Guys & Hunks",
         "G0|/categories/amateur/" to "🏠 Amateur Men",
@@ -76,34 +92,57 @@ class EpornerGayProvider : MainAPI() {
     )
 
     override suspend fun getMainPage(page: Int, request: MainPageRequest): HomePageResponse {
-        if (request.data.startsWith("G0|")) {
-            val items = gay0day(page, request.data.removePrefix("G0|"))
-                .filter(::isMenOnly).distinctBy(::dedupeKey)
+        if (request.data.startsWith("MIX|")) {
+            val mix = runCatching { Mix.valueOf(request.data.removePrefix("MIX|")) }.getOrNull()
+                ?: return newHomePageResponse(HomePageList(request.name, emptyList(), true), false)
+            val sourceItems = curatedMix(page, mix)
+            val items = uniqueBrowseItems(sourceItems)
             return newHomePageResponse(
                 HomePageList(request.name, items.map { it.toSearchResponse() }, true),
-                hasNext = items.isNotEmpty(),
+                hasNext = mix != Mix.SURPRISE && sourceItems.isNotEmpty(),
+            )
+        }
+        if (request.data.startsWith("COLLECTION|")) {
+            val collection = runCatching {
+                Collection.valueOf(request.data.removePrefix("COLLECTION|"))
+            }.getOrNull() ?: return newHomePageResponse(HomePageList(request.name, emptyList(), true), false)
+            val sourceItems = collectionCategories(collection).amap { gay0day(page, it) }
+                .flatten().filter(::isMenOnly)
+            val items = uniqueBrowseItems(sourceItems)
+            return newHomePageResponse(
+                HomePageList(request.name, items.map { it.toSearchResponse() }, true),
+                hasNext = sourceItems.isNotEmpty(),
+            )
+        }
+        if (request.data.startsWith("G0|")) {
+            val sourceItems = gay0day(page, request.data.removePrefix("G0|")).filter(::isMenOnly)
+            val items = uniqueBrowseItems(sourceItems)
+            return newHomePageResponse(
+                HomePageList(request.name, items.map { it.toSearchResponse() }, true),
+                hasNext = sourceItems.size >= cataloguePageSize,
             )
         }
         if (request.data.startsWith("EP|")) {
             val parts = request.data.split('|', limit = 3)
-            val items = eporner(page, parts.getOrElse(1) { "latest" }, parts.getOrElse(2) { "gay" })
-                .filter(::isMenOnly).distinctBy(::dedupeKey)
+            val items = uniqueBrowseItems(eporner(
+                page, parts.getOrElse(1) { "latest" }, parts.getOrElse(2) { "gay" }
+            ).filter(::isMenOnly))
             return newHomePageResponse(
                 HomePageList(request.name, items.map { it.toSearchResponse() }, true),
                 hasNext = items.isNotEmpty(),
             )
         }
         if (request.data.startsWith("FX|")) {
-            val items = fxggxt(page, request.data.removePrefix("FX|"))
-                .filter(::isMenOnly).distinctBy(::dedupeKey)
+            val items = uniqueBrowseItems(fxggxt(page, request.data.removePrefix("FX|"))
+                .filter(::isMenOnly))
             return newHomePageResponse(
                 HomePageList(request.name, items.map { it.toSearchResponse() }, true),
                 hasNext = items.isNotEmpty(),
             )
         }
         if (request.data.startsWith("BF|")) {
-            val items = boyfriendTv(page, "latest", request.data.removePrefix("BF|"))
-                .filter(::isMenOnly).distinctBy(::dedupeKey)
+            val items = uniqueBrowseItems(boyfriendTv(page, "latest", request.data.removePrefix("BF|"))
+                .filter(::isMenOnly))
             return newHomePageResponse(
                 HomePageList(request.name, items.map { it.toSearchResponse() }, true),
                 hasNext = items.isNotEmpty(),
@@ -112,8 +151,8 @@ class EpornerGayProvider : MainAPI() {
         if (request.data.startsWith("BFK|")) {
             val keywords = request.data.removePrefix("BFK|").split(',')
                 .map { it.trim().lowercase() }.filter { it.isNotBlank() }
-            val items = boyfriendKeyword(page, keywords)
-                .filter(::isMenOnly).distinctBy(::dedupeKey)
+            val items = uniqueBrowseItems(boyfriendKeyword(page, keywords)
+                .filter(::isMenOnly))
             return newHomePageResponse(
                 HomePageList(request.name, items.map { it.toSearchResponse() }, true),
                 hasNext = items.isNotEmpty(),
@@ -128,7 +167,7 @@ class EpornerGayProvider : MainAPI() {
             Feed.BOYFRIEND -> boyfriendTv(page, "latest", "all")
             Feed.TRENDY -> trendy(page)
             Feed.PORNONE -> pornOne(page)
-        }.filter(::isMenOnly).distinctBy(::dedupeKey)
+        }.filter(::isMenOnly).let(::uniqueBrowseItems)
 
         return newHomePageResponse(
             HomePageList(request.name, items.map { it.toSearchResponse() }, true),
@@ -138,16 +177,87 @@ class EpornerGayProvider : MainAPI() {
 
     private suspend fun gay0day(page: Int, path: String): List<ItemData> {
         val url = if (page <= 1) "$mainUrl$path" else "$mainUrl${path.trimEnd('/')}/$page/"
-        return app.get(url, headers = headers, timeout = 30).document.select("div.item").mapNotNull { el ->
-            val a = el.selectFirst("a[href][title]") ?: return@mapNotNull null
-            val href = absolute(a.attr("href"), mainUrl) ?: return@mapNotNull null
-            if (!href.contains("/videos/")) return@mapNotNull null
-            val title = a.attr("title").ifBlank { a.text().trim() }
-            val image = el.selectFirst("img.thumb, img")
-            val poster = image?.attr("data-src").orEmpty().ifBlank { image?.attr("src").orEmpty() }
-            if (title.isBlank()) null else ItemData(
-                Source.GAY0DAY.name, href, title, absolute(poster, mainUrl), "gay men"
+        return app.get(url, headers = headers, timeout = 30).document
+            .select("#list_videos_common_videos_list_items > div.item, div.list-videos > div.item")
+            .mapNotNull { el ->
+                val a = el.selectFirst("a[href][title]") ?: return@mapNotNull null
+                val href = absolute(a.attr("href"), mainUrl) ?: return@mapNotNull null
+                if (!href.contains("/videos/")) return@mapNotNull null
+                val title = a.attr("title").ifBlank { a.text().trim() }
+                val image = el.selectFirst("img.thumb, img")
+                val poster = image?.attr("data-src").orEmpty().ifBlank { image?.attr("src").orEmpty() }
+                val duration = parseDuration(el.selectFirst(".is-hd")?.text().orEmpty())
+                if (title.isBlank()) null else ItemData(
+                    Source.GAY0DAY.name, href, title, absolute(poster, mainUrl), "gay men", duration
+                )
+            }
+    }
+
+    private suspend fun curatedMix(page: Int, mix: Mix): List<ItemData> {
+        val categories = mixCategories(mix, page)
+        val items = categories.amap { gay0day(page, it) }
+            .flatten()
+            .filter(::isMenOnly)
+            .distinctBy(::dedupeKey)
+        return when (mix) {
+            Mix.QUICK -> items.filter { it.durationSeconds != null && it.durationSeconds <= 10 * 60 }
+            Mix.MEDIUM -> items.filter {
+                it.durationSeconds != null && it.durationSeconds in 10 * 60..20 * 60
+            }
+            Mix.LONG -> items.filter { it.durationSeconds != null && it.durationSeconds >= 20 * 60 }
+            Mix.MARATHON -> items.filter { it.durationSeconds != null && it.durationSeconds >= 45 * 60 }
+            Mix.SURPRISE -> items.getOrNull(dailySeed() % items.size.coerceAtLeast(1))?.let(::listOf).orEmpty()
+            Mix.DAILY -> items
+        }
+    }
+
+    private fun mixCategories(mix: Mix, page: Int): List<String> {
+        val categories = discoveryCategories
+        val start = (dailySeed() + page - 1) % categories.size
+        val count = if (mix == Mix.SURPRISE) 1 else 3
+        return (0 until count).map { categories[(start + it) % categories.size] }
+    }
+
+    private val discoveryCategories = listOf(
+        "/categories/amateur/",
+        "/categories/muscle/",
+        "/categories/jock/",
+        "/categories/daddy/",
+        "/categories/bear/",
+        "/categories/hairy/",
+        "/categories/solo-male/",
+        "/categories/outdoor/",
+        "/categories/latino/",
+        "/categories/asian/",
+        "/categories/twink/",
+        "/categories/massage/",
+    )
+
+    private fun collectionCategories(collection: Collection): List<String> {
+        return when (collection) {
+            Collection.ENERGY -> listOf(
+                "/categories/muscle/", "/categories/jock/", "/categories/outdoor/"
             )
+            Collection.COZY -> listOf(
+                "/categories/daddy/", "/categories/bear/", "/categories/hairy/"
+            )
+            Collection.PLAYFUL -> listOf(
+                "/categories/twink/", "/categories/amateur/", "/categories/solo-male/"
+            )
+            Collection.WORLD -> listOf(
+                "/categories/latino/", "/categories/asian/", "/categories/brazilian/"
+            )
+        }
+    }
+
+    private fun dailySeed(): Int = Calendar.getInstance().get(Calendar.DAY_OF_YEAR)
+
+    private fun parseDuration(value: String): Int? {
+        val parts = value.trim().split(':').map { it.toIntOrNull() ?: return null }
+        return when (parts.size) {
+            2 -> parts[0] * 60 + parts[1]
+            3 -> parts[0] * 3600 + parts[1] * 60 + parts[2]
+            else -> null
         }
     }
 
@@ -536,7 +646,14 @@ class EpornerGayProvider : MainAPI() {
     }
 
     private fun dedupeKey(item: ItemData): String {
-        return item.title.lowercase().replace(Regex("[^a-z0-9]"), "").take(80)
+        return Regex("/videos/(\\d+)(?:/|$)").find(item.url)?.groupValues?.get(1)
+            ?: item.url.substringBefore('?').trimEnd('/').lowercase()
+    }
+
+    private fun uniqueBrowseItems(items: List<ItemData>): List<ItemData> {
+        return synchronized(seenBrowseKeys) {
+            items.distinctBy(::dedupeKey).filter { seenBrowseKeys.add(dedupeKey(it)) }
+        }
     }
 
     private fun interleave(lists: List<List<ItemData>>): List<ItemData> {

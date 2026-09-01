@@ -1,6 +1,6 @@
 # BroStream by Faz
 
-BroStream by Faz is an unofficial, adults-only CloudStream extension focused on gay-male content from multiple external sources.
+BroStream by Faz is an unofficial, adults-only CloudStream extension focused on gay-male content. Its discovery home screen adds rotating daily mixes, themed collections, duration-based browsing, and a daily surprise pick alongside the full catalogue. To keep browsing varied, each title is shown only once per CloudStream browsing session.
 
 > **Adults only (18+).** This project does not host videos. Availability depends on the external websites, your country, and your network. Only use it where doing so is lawful. The pictures below are illustrations; the wording on your CloudStream screen may be slightly different.
 
