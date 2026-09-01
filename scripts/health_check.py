@@ -17,10 +17,10 @@ USER_AGENT = (
 )
 
 CHECKS = (
-    ("GayPornTube catalogue", "https://www.gayporntube.com/most-viewed/", rb"data-video-id="),
-    ("GayPornTube amateur", "https://www.gayporntube.com/channels/5/amature/page1.html", rb"data-video-id="),
-    ("GayPornTube Latino", "https://www.gayporntube.com/channels/16/latino/page1.html", rb"data-video-id="),
-    ("GayPornTube oral", "https://www.gayporntube.com/channels/17/oral/page1.html", rb"data-video-id="),
+    ("ManPorn catalogue", "https://manporn.xxx/", rb"/videos/[0-9]+/"),
+    ("ManPorn blowjob", "https://manporn.xxx/categories/blowjob/", rb"/videos/[0-9]+/"),
+    ("GayVids amateur", "https://www.gayvids.tv/categories/amateur/", rb"/videos/[0-9]+/"),
+    ("GayVids Brazilian", "https://www.gayvids.tv/categories/brazilian/", rb"/videos/[0-9]+/"),
 )
 
 

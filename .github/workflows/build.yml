@@ -21,7 +21,7 @@ jobs:
       - name: Build extension and catalogue
         run: |
           chmod +x gradlew
-          ./gradlew BroStreamByFaz:make makePluginsJson
+          ./gradlew BroStreamFreshByFaz:make makePluginsJson
           mkdir public
           cp EpornerGay/build/*.cs3 public/
           cp build/plugins.json public/

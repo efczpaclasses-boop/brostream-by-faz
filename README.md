@@ -110,7 +110,7 @@ CloudStream checks the repository for newer versions. When an update appears, op
 Build locally with:
 
 ```bash
-./gradlew BroStreamByFaz:make makePluginsJson
+./gradlew BroStreamFreshByFaz:make makePluginsJson
 ```
 
 The GitHub build workflow publishes the extension catalogue to the `builds` branch. The scheduled health check tests the four catalogue sources every six hours and reports a failed run when a source no longer matches the expected page structure.

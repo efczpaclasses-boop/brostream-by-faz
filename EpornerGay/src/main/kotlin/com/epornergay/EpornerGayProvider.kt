@@ -9,9 +9,10 @@ import org.json.JSONObject
 import java.math.BigInteger
 import java.net.URI
 import java.net.URLEncoder
+import java.util.concurrent.ConcurrentHashMap
 
 class EpornerGayProvider : MainAPI() {
-    override var mainUrl = "https://www.gayporntube.com"
+    override var mainUrl = "https://manporn.xxx"
     override var name = "BroStream by Faz"
     override var lang = "en"
     override val hasMainPage = true
@@ -26,10 +27,11 @@ class EpornerGayProvider : MainAPI() {
         "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36"
     private val headers = mapOf("User-Agent" to userAgent, "Accept" to "text/html,application/xhtml+xml")
     private val repeatedVideoIds = setOf("772308", "1739999")
+    private val homeOwners = ConcurrentHashMap<String, String>()
     private val pornHubCookies = mapOf("hasVisited" to "1", "accessAgeDisclaimerPH" to "1", "platform" to "pc")
 
     private enum class Feed { FRESH, AMATEUR, TOP, LONG, BOYFRIEND, TRENDY, PORNONE }
-    private enum class Source { CURATED, GAYPORNTUBE, GAY0DAY, EPORNER, BOYFRIEND, PORNHUB, TRENDY, PORNONE, FXGGXT }
+    private enum class Source { MANPORN, GAYVIDS, CURATED, GAYPORNTUBE, GAY0DAY, EPORNER, BOYFRIEND, PORNHUB, TRENDY, PORNONE, FXGGXT }
 
     data class ItemData(
         val source: String = "",
@@ -40,39 +42,48 @@ class EpornerGayProvider : MainAPI() {
     )
 
     override val mainPage = mainPageOf(
-        "GPT|/most-viewed/" to "🔥 Most Watched Gay Men",
-        "GPT|/search/videos/amateur-men/page1.html" to "🏠 Fresh Amateur Today",
-        "CURATED" to "⭐ MyVidster Gay-Men Picks",
-        "GPT|/search/videos/homemade-gay/page1.html" to "🎥 Homemade & Non-Studio",
-        "GPT|/search/videos/latino-men/page1.html" to "🌶️ Latino Men",
-        "GPT|/search/videos/brazilian-men/page1.html" to "🇧🇷 Brazilian Men",
-        "GPT|/search/videos/gay-blowjob/page1.html" to "👄 Hottest Blowjobs",
-        "GPT|/search/videos/blowjob-compilation/page1.html" to "💦 Blowjob Compilations",
-        "GPT|/search/videos/cum-compilation/page1.html" to "💦 Cum Compilations",
-        "GPT|/search/videos/gay-party/page1.html" to "🎉 Party & Group Play",
+        "MP|/" to "🔥 Fresh Gay Men — ManPorn",
+        "GV|/categories/amateur/" to "🏠 Top Amateur Men",
+        "CURATED" to "⭐ MyVidster Gay Picks — 3 Profiles",
+        "GV|/categories/homemade/" to "🎥 Homemade & Non-Studio",
+        "MP|/categories/latino/" to "🌶️ Latino Men",
+        "GV|/categories/brazilian/" to "🇧🇷 Brazilian Men",
+        "MP|/categories/blowjob/" to "👄 Hottest Blowjobs",
+        "GV|/categories/compilation/" to "💦 Gay Compilations",
+        "MP|/categories/compilation/" to "💦 Cum & Blowjob Compilations",
+        "GV|/categories/party/" to "🎉 Party & Group Play",
         "GPT|/search/videos/pnp-slam/page1.html" to "🔥 PNP & Slam",
-        "GPT|/search/videos/muscle-men/page1.html" to "💪 Muscle Men",
-        "GPT|/search/videos/frat-jocks/page1.html" to "🔥 Frat Guys & Jocks",
-        "GPT|/search/videos/straight-curious-guys/page1.html" to "Straight & Curious Guys",
-        "GPT|/search/videos/big-cock-men/page1.html" to "Big Dick",
-        "GPT|/search/videos/gay-bareback/page1.html" to "Bareback",
-        "GPT|/search/videos/gay-group-orgy/page1.html" to "Group & Orgies",
-        "GPT|/search/videos/solo-male/page1.html" to "Solo Men",
-        "GPT|/search/videos/gay-outdoor-public/page1.html" to "Outdoor & Public",
-        "GPT|/search/videos/gay-cumshot/page1.html" to "Cumshots",
-        "GPT|/search/videos/gay-gloryhole/page1.html" to "Gloryholes",
-        "GPT|/search/videos/gay-handjob/page1.html" to "Handjobs",
-        "GPT|/search/videos/gay-interracial/page1.html" to "Interracial Men",
-        "GPT|/search/videos/asian-men-gay/page1.html" to "Asian Men",
-        "GPT|/search/videos/gay-first-time/page1.html" to "First Time",
-        "GPT|/search/videos/gay-webcam/page1.html" to "Webcam & Creator-Made",
-        "GPT|/search/videos/gay-voyeur/page1.html" to "Voyeur",
+        "MP|/categories/muscle/" to "💪 Muscle Men",
+        "GV|/search/gay-jock/" to "🔥 Jocks",
+        "MP|/search/?q=straight+curious+guys" to "Straight & Curious Guys",
+        "GV|/categories/big-cock/" to "Big Dick",
+        "MP|/categories/bareback/" to "Bareback",
+        "GV|/categories/group-sex/" to "Group & Orgies",
+        "MP|/categories/solo/" to "Solo Men",
+        "GV|/categories/outdoor/" to "Outdoor & Public",
+        "MP|/categories/cumshot/" to "Cumshots",
+        "GV|/categories/gloryhole/" to "Gloryholes",
+        "MP|/categories/handjob/" to "Handjobs",
+        "GV|/categories/interracial/" to "Interracial Men",
+        "MP|/categories/asian/" to "Asian Men",
+        "GV|/categories/first-time/" to "First Time",
+        "MP|/categories/webcam/" to "Webcam & Creator-Made",
     )
 
     override suspend fun getMainPage(page: Int, request: MainPageRequest): HomePageResponse {
+        if (request.data.startsWith("MP|")) {
+            val items = manPorn(page, request.data.removePrefix("MP|")).filter(::isMenOnly)
+                .filter { claimForRow(it, request.data) }.distinctBy(::dedupeKey)
+            return newHomePageResponse(HomePageList(request.name, items.map { it.toSearchResponse() }, true), hasNext = items.isNotEmpty())
+        }
+        if (request.data.startsWith("GV|")) {
+            val items = gayVids(page, request.data.removePrefix("GV|")).filter(::isMenOnly)
+                .filter { claimForRow(it, request.data) }.distinctBy(::dedupeKey)
+            return newHomePageResponse(HomePageList(request.name, items.map { it.toSearchResponse() }, true), hasNext = items.isNotEmpty())
+        }
         if (request.data == "CURATED") {
             val items = myVidsterPicks.drop((page - 1) * 20).take(20)
-                .filter(::isMenOnly).distinctBy(::dedupeKey)
+                .filter(::isMenOnly).filter { claimForRow(it, request.data) }.distinctBy(::dedupeKey)
             return newHomePageResponse(
                 HomePageList(request.name, items.map { it.toSearchResponse() }, false),
                 hasNext = page * 20 < myVidsterPicks.size,
@@ -80,7 +91,7 @@ class EpornerGayProvider : MainAPI() {
         }
         if (request.data.startsWith("GPT|")) {
             val items = gayPornTube(page, request.data.removePrefix("GPT|"))
-                .filter(::isMenOnly).distinctBy(::dedupeKey)
+                .filter(::isMenOnly).filter { claimForRow(it, request.data) }.distinctBy(::dedupeKey)
             return newHomePageResponse(
                 HomePageList(request.name, items.map { it.toSearchResponse() }, true),
                 hasNext = items.isNotEmpty(),
@@ -146,6 +157,36 @@ class EpornerGayProvider : MainAPI() {
         )
     }
 
+    private suspend fun manPorn(page: Int, path: String): List<ItemData> {
+        val base = "https://manporn.xxx"
+        val url = when {
+            page <= 1 -> "$base$path"
+            path.contains("?q=") -> "$base/search/$page/?q=${path.substringAfter("?q=")}"
+            else -> "$base${path.trimEnd('/')}/$page/"
+        }
+        return app.get(url, headers = headers, timeout = 30).document.select("div.thumb").mapNotNull { el ->
+            val a = el.selectFirst("a[href*=/videos/]") ?: return@mapNotNull null
+            val href = absolute(a.attr("href"), base) ?: return@mapNotNull null
+            val image = el.selectFirst("img")
+            val title = image?.attr("alt").orEmpty().ifBlank { a.attr("title").ifBlank { a.text().trim() } }
+            val poster = image?.attr("data-src").orEmpty().ifBlank { image?.attr("src").orEmpty() }
+            if (title.isBlank()) null else ItemData(Source.MANPORN.name, href, title, absolute(poster, base), "gay men")
+        }
+    }
+
+    private suspend fun gayVids(page: Int, path: String): List<ItemData> {
+        val base = "https://www.gayvids.tv"
+        val url = if (page <= 1) "$base$path" else "$base${path.trimEnd('/')}/$page/"
+        return app.get(url, headers = headers, timeout = 30).document.select(".list-videos .item").mapNotNull { el ->
+            val a = el.selectFirst("a[href*=/videos/][title]") ?: return@mapNotNull null
+            val href = absolute(a.attr("href"), base) ?: return@mapNotNull null
+            val title = a.attr("title").ifBlank { el.selectFirst(".title")?.text().orEmpty() }
+            val image = el.selectFirst("img")
+            val poster = image?.attr("data-original").orEmpty().ifBlank { image?.attr("src").orEmpty() }
+            if (title.isBlank()) null else ItemData(Source.GAYVIDS.name, href, title, absolute(poster, base), "gay men")
+        }
+    }
+
     private val myVidsterPicks = listOf(
         ItemData(Source.CURATED.name, "https://www.xvideos.com/video.hoeabkmf390/danish_boy_and_gay_pornstar_frederik_known_from_6mag.dk_-_10", "Danish gay performer Frederik", "https://cdn2.myvidster.com/user/thumbs/e9e4cc891049f85139491c23bd14c5b7_1.jpg", "gay boy male"),
         ItemData(Source.CURATED.name, "https://xhamster.com/movies/2248475/we_should_hang_at_my_place_sometime..html", "Cade's Anal Awakening", "https://cdn2.myvidster.com/user/images/20July2014/320876/1070396135_1.jpg", "gay men male"),
@@ -203,6 +244,8 @@ class EpornerGayProvider : MainAPI() {
         val lists = sources.amap { source ->
             runCatching {
                 when (source) {
+                    Source.MANPORN -> manPorn(page, if (query == "all") "/" else "/search/?q=${URLEncoder.encode(query, "UTF-8")}")
+                    Source.GAYVIDS -> gayVids(page, if (query == "all") "/" else "/search/$query/")
                     Source.CURATED -> myVidsterPicks
                     Source.GAYPORNTUBE -> gayPornTube(
                         page,
@@ -384,6 +427,8 @@ class EpornerGayProvider : MainAPI() {
 
     private val ItemData.sourceLabel: String
         get() = when (source) {
+            Source.MANPORN.name -> "MP"
+            Source.GAYVIDS.name -> "GV"
             Source.CURATED.name -> "MV"
             Source.GAYPORNTUBE.name -> "GPT"
             Source.GAY0DAY.name -> "G0"
@@ -431,6 +476,8 @@ class EpornerGayProvider : MainAPI() {
     ): Boolean {
         val item = parseItem(data) ?: return false
         return when (runCatching { Source.valueOf(item.source) }.getOrNull()) {
+            Source.MANPORN -> loadSiteMp4(item, "ManPorn", callback)
+            Source.GAYVIDS -> loadSiteMp4(item, "GayVids", callback)
             Source.CURATED -> {
                 runCatching { loadExtractor(item.url, item.url, subtitleCallback, callback) }
                     .isSuccess
@@ -445,6 +492,18 @@ class EpornerGayProvider : MainAPI() {
             Source.FXGGXT -> loadFxggxt(item.url, subtitleCallback, callback)
             null -> false
         }
+    }
+
+    private suspend fun loadSiteMp4(item: ItemData, label: String, callback: (ExtractorLink) -> Unit): Boolean {
+        val text = app.get(item.url, headers = headers, timeout = 30).text
+        val streams = Regex("https?[^\\\"']+?\\.mp4[^\\\"'< ]*", RegexOption.IGNORE_CASE)
+            .findAll(text).map { it.value.replace("\\/", "/") }
+            .filterNot { it.endsWith(".mp4.jpg") }.distinct().toList()
+        streams.forEach { stream ->
+            val quality = Regex("_(\\d{3,4})p?\\.mp4", RegexOption.IGNORE_CASE).find(stream)?.groupValues?.get(1) ?: "HD"
+            emitLink(label, quality, stream, item.url, false, callback)
+        }
+        return streams.isNotEmpty()
     }
 
     private suspend fun loadGayPornTube(url: String, callback: (ExtractorLink) -> Unit): Boolean {
@@ -604,7 +663,7 @@ class EpornerGayProvider : MainAPI() {
             "cougar", "granny", "boy and girl", "guy and girl", "man and woman",
         )
         if (item.url.isBlank() || item.title.isBlank() || excluded.any(text::contains)) return false
-        if (item.source == Source.CURATED.name || item.source == Source.GAYPORNTUBE.name || item.source == Source.GAY0DAY.name) return true
+        if (item.source == Source.MANPORN.name || item.source == Source.GAYVIDS.name || item.source == Source.CURATED.name || item.source == Source.GAYPORNTUBE.name || item.source == Source.GAY0DAY.name) return true
         val maleSignals = listOf(
             " man", "men ", " male", " guy", "guys", " boy", "boys", " gay", " cock", "dick",
             " daddy", "daddies", " bear", " cub", " hunk", " stud", " jock", " twink", "bro ",
@@ -615,6 +674,18 @@ class EpornerGayProvider : MainAPI() {
 
     private fun dedupeKey(item: ItemData): String {
         return item.title.lowercase().replace(Regex("[^a-z0-9]"), "").take(80)
+    }
+
+    private fun claimForRow(item: ItemData, row: String): Boolean {
+        val videoId = Regex("/videos?/(\\d+)").find(item.url)?.groupValues?.get(1)
+        val titleKey = dedupeKey(item)
+        val keys = buildList {
+            if (videoId != null) add("${item.source}:$videoId")
+            if (titleKey.isNotBlank()) add("title:$titleKey")
+        }
+        if (keys.any { key -> homeOwners[key]?.let { it != row } == true }) return false
+        keys.forEach { key -> homeOwners.putIfAbsent(key, row) }
+        return keys.all { key -> homeOwners[key] == row }
     }
 
     private fun interleave(lists: List<List<ItemData>>): List<ItemData> {
