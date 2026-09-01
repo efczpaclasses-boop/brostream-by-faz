@@ -17,10 +17,10 @@ USER_AGENT = (
 )
 
 CHECKS = (
-    ("Gay0Day catalogue", "https://gay0day.com/categories/gay/", rb"/videos/[0-9]+/"),
-    ("Gay0Day amateur", "https://gay0day.com/categories/amateur/", rb"/videos/[0-9]+/"),
-    ("Gay0Day blowjob", "https://gay0day.com/categories/blowjob/", rb"/videos/[0-9]+/"),
-    ("Gay0Day playback", "https://gay0day.com/videos/29816/hot-school-gay-boy-sex-first-time-i-let-it-sit-there-for-a-bit-and-when-i-did-pull-off/", rb"<source[^>]+(?:mp4|m3u8)"),
+    ("GayPornTube catalogue", "https://www.gayporntube.com/most-viewed/", rb"data-video-id="),
+    ("GayPornTube amateur", "https://www.gayporntube.com/channels/5/amature/page1.html", rb"data-video-id="),
+    ("GayPornTube Latino", "https://www.gayporntube.com/channels/16/latino/page1.html", rb"data-video-id="),
+    ("GayPornTube oral", "https://www.gayporntube.com/channels/17/oral/page1.html", rb"data-video-id="),
 )
 
 

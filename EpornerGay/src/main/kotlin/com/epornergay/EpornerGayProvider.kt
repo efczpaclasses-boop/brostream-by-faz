@@ -11,7 +11,7 @@ import java.net.URI
 import java.net.URLEncoder
 
 class EpornerGayProvider : MainAPI() {
-    override var mainUrl = "https://gay0day.com"
+    override var mainUrl = "https://www.gayporntube.com"
     override var name = "BroStream by Faz"
     override var lang = "en"
     override val hasMainPage = true
@@ -28,7 +28,7 @@ class EpornerGayProvider : MainAPI() {
     private val pornHubCookies = mapOf("hasVisited" to "1", "accessAgeDisclaimerPH" to "1", "platform" to "pc")
 
     private enum class Feed { FRESH, AMATEUR, TOP, LONG, BOYFRIEND, TRENDY, PORNONE }
-    private enum class Source { GAY0DAY, EPORNER, BOYFRIEND, PORNHUB, TRENDY, PORNONE, FXGGXT }
+    private enum class Source { GAYPORNTUBE, GAY0DAY, EPORNER, BOYFRIEND, PORNHUB, TRENDY, PORNONE, FXGGXT }
 
     data class ItemData(
         val source: String = "",
@@ -39,43 +39,43 @@ class EpornerGayProvider : MainAPI() {
     )
 
     override val mainPage = mainPageOf(
-        "G0|/categories/gay/" to "🔥 Fresh Gay Men",
-        "G0|/categories/hunk/" to "🔥 Hot Guys & Hunks",
-        "G0|/categories/amateur/" to "🏠 Amateur Men",
-        "G0|/categories/homemade/" to "🎥 Homemade — Non-Studio",
-        "G0|/categories/muscle/" to "💪 Muscle Men",
-        "G0|/categories/jock/" to "Jocks",
-        "G0|/categories/daddy/" to "🐻 Daddies",
-        "G0|/categories/bear/" to "Bears",
-        "G0|/categories/hairy/" to "Hairy Men",
-        "G0|/categories/straight-guys/" to "Straight & Curious Guys",
-        "G0|/categories/big-cock/" to "Big Dick",
-        "G0|/categories/bareback/" to "Bareback",
-        "G0|/categories/group-sex/" to "Group & Orgies",
-        "G0|/categories/solo-male/" to "Solo Men",
-        "G0|/categories/outdoor/" to "Outdoor & Public",
-        "G0|/categories/brazilian/" to "Brazilian Men",
-        "G0|/categories/latino/" to "Latino Men",
-        "G0|/categories/indian/" to "Indian Men",
-        "G0|/categories/blowjob/" to "Hottest Blowjobs",
-        "G0|/categories/compilation/" to "Compilations",
-        "G0|/categories/cumshot/" to "Cumshots",
-        "G0|/categories/rough-sex/" to "Rough & Hardcore",
-        "G0|/categories/glory-hole/" to "Gloryholes",
-        "G0|/categories/pov/" to "POV",
-        "G0|/categories/massage/" to "Massage",
-        "G0|/categories/twink/" to "Twinks",
-        "G0|/categories/interracial/" to "Interracial Men",
-        "G0|/categories/asian/" to "Asian Men",
-        "G0|/categories/mature/" to "Mature Men",
-        "G0|/categories/uncut/" to "Uncut Men",
-        "G0|/categories/hd-porn/" to "HD Gay Men",
-        "G0|/categories/handjob/" to "Handjobs",
-        "G0|/categories/rimming/" to "Rimming",
-        "G0|/categories/threesome/" to "Threesomes",
+        "GPT|/most-viewed/" to "🔥 Most Watched Gay Men",
+        "GPT|/channels/5/amature/page1.html" to "🏠 Fresh Amateur Today",
+        "GPT|/search/videos/homemade/page1.html" to "🎥 Homemade & Non-Studio",
+        "GPT|/channels/16/latino/page1.html" to "🌶️ Latino Men",
+        "GPT|/search/videos/brazilian/page1.html" to "🇧🇷 Brazilian Men",
+        "GPT|/channels/17/oral/page1.html" to "👄 Hottest Blowjobs",
+        "GPT|/search/videos/blowjob-compilation/page1.html" to "💦 Blowjob Compilations",
+        "GPT|/search/videos/cum-compilation/page1.html" to "💦 Cum Compilations",
+        "GPT|/search/videos/party/page1.html" to "🎉 Party & Group Play",
+        "GPT|/search/videos/pnp-slam/page1.html" to "🔥 PNP & Slam",
+        "GPT|/channels/18/muscle-boys/page1.html" to "💪 Muscle Men",
+        "GPT|/channels/12/frat-guys/page1.html" to "🔥 Frat Guys & Jocks",
+        "GPT|/channels/21/straight-boys/page1.html" to "Straight & Curious Guys",
+        "GPT|/channels/35/big-cocks/page1.html" to "Big Dick",
+        "GPT|/channels/7/bareback/page1.html" to "Bareback",
+        "GPT|/channels/14/group-sex/page1.html" to "Group & Orgies",
+        "GPT|/channels/34/solo/page1.html" to "Solo Men",
+        "GPT|/channels/40/public-outside/page1.html" to "Outdoor & Public",
+        "GPT|/channels/9/cum-shots/page1.html" to "Cumshots",
+        "GPT|/channels/13/glory-holes/page1.html" to "Gloryholes",
+        "GPT|/channels/44/handjob/page1.html" to "Handjobs",
+        "GPT|/channels/15/interracial/page1.html" to "Interracial Men",
+        "GPT|/channels/6/asian/page1.html" to "Asian Men",
+        "GPT|/channels/45/first-time/page1.html" to "First Time",
+        "GPT|/channels/19/web-cam/page1.html" to "Webcam & Creator-Made",
+        "GPT|/channels/41/voyeur/page1.html" to "Voyeur",
     )
 
     override suspend fun getMainPage(page: Int, request: MainPageRequest): HomePageResponse {
+        if (request.data.startsWith("GPT|")) {
+            val items = gayPornTube(page, request.data.removePrefix("GPT|"))
+                .filter(::isMenOnly).distinctBy(::dedupeKey)
+            return newHomePageResponse(
+                HomePageList(request.name, items.map { it.toSearchResponse() }, true),
+                hasNext = items.isNotEmpty(),
+            )
+        }
         if (request.data.startsWith("G0|")) {
             val items = gay0day(page, request.data.removePrefix("G0|"))
                 .filter(::isMenOnly).distinctBy(::dedupeKey)
@@ -136,6 +136,26 @@ class EpornerGayProvider : MainAPI() {
         )
     }
 
+    private suspend fun gayPornTube(page: Int, path: String): List<ItemData> {
+        val pagedPath = when {
+            path.contains("page1.html") -> path.replace("page1.html", "page$page.html")
+            page <= 1 -> path
+            else -> path.trimEnd('/') + "/page$page.html"
+        }
+        return app.get("$mainUrl$pagedPath", headers = headers, timeout = 30).document
+            .select("div.item.item-col[data-video-id]").mapNotNull { el ->
+                val a = el.selectFirst("a.image[href][title]") ?: return@mapNotNull null
+                val href = absolute(a.attr("href"), mainUrl) ?: return@mapNotNull null
+                if (!href.contains("/video/")) return@mapNotNull null
+                val title = a.attr("title").ifBlank { a.text().trim() }
+                val image = el.selectFirst("img[data-src], img[src]")
+                val poster = image?.attr("data-src").orEmpty().ifBlank { image?.attr("src").orEmpty() }
+                if (title.isBlank()) null else ItemData(
+                    Source.GAYPORNTUBE.name, href, title, absolute(poster, mainUrl), "gay men"
+                )
+            }
+    }
+
     private suspend fun gay0day(page: Int, path: String): List<ItemData> {
         val url = if (page <= 1) "$mainUrl$path" else "$mainUrl${path.trimEnd('/')}/$page/"
         return app.get(url, headers = headers, timeout = 30).document.select("div.item").mapNotNull { el ->
@@ -158,6 +178,11 @@ class EpornerGayProvider : MainAPI() {
         val lists = sources.amap { source ->
             runCatching {
                 when (source) {
+                    Source.GAYPORNTUBE -> gayPornTube(
+                        page,
+                        if (query == "all") "/most-viewed/"
+                        else "/search/videos/${query.lowercase().replace(Regex("[^a-z0-9]+"), "-").trim('-')}/page1.html"
+                    )
                     Source.GAY0DAY -> gay0day(
                         page,
                         if (query == "all") "/categories/gay/"
@@ -318,7 +343,7 @@ class EpornerGayProvider : MainAPI() {
     override suspend fun search(query: String): List<SearchResponse> {
         val slug = query.lowercase().trim().replace(Regex("[^a-z0-9]+"), "-").trim('-')
         if (slug.isBlank()) return emptyList()
-        return gay0day(1, "/search/$slug/").filter(::isMenOnly).distinctBy(::dedupeKey)
+        return gayPornTube(1, "/search/videos/$slug/page1.html").filter(::isMenOnly).distinctBy(::dedupeKey)
             .map { it.toSearchResponse() }
     }
 
@@ -333,6 +358,7 @@ class EpornerGayProvider : MainAPI() {
 
     private val ItemData.sourceLabel: String
         get() = when (source) {
+            Source.GAYPORNTUBE.name -> "GPT"
             Source.GAY0DAY.name -> "G0"
             Source.EPORNER.name -> "EP"
             Source.BOYFRIEND.name -> "BF"
@@ -372,6 +398,7 @@ class EpornerGayProvider : MainAPI() {
     ): Boolean {
         val item = parseItem(data) ?: return false
         return when (runCatching { Source.valueOf(item.source) }.getOrNull()) {
+            Source.GAYPORNTUBE -> loadGayPornTube(item.url, callback)
             Source.GAY0DAY -> loadGay0Day(item.url, callback)
             Source.EPORNER -> loadEporner(item.url, callback)
             Source.BOYFRIEND -> loadBoyfriendTv(item.url, callback)
@@ -381,6 +408,20 @@ class EpornerGayProvider : MainAPI() {
             Source.FXGGXT -> loadFxggxt(item.url, subtitleCallback, callback)
             null -> false
         }
+    }
+
+    private suspend fun loadGayPornTube(url: String, callback: (ExtractorLink) -> Unit): Boolean {
+        val doc = app.get(url, headers = headers, timeout = 30).document
+        var emitted = false
+        doc.select("video source[src], source[type*=video][src]").forEach { source ->
+            val stream = absolute(source.attr("src"), url) ?: return@forEach
+            val label = source.attr("label").ifBlank {
+                Regex("(\\d{3,4})p", RegexOption.IGNORE_CASE).find(stream)?.groupValues?.get(1) ?: "HD"
+            }
+            emitLink("GayPornTube", label, stream, url, stream.contains(".m3u8"), callback)
+            emitted = true
+        }
+        return emitted
     }
 
     private suspend fun loadGay0Day(url: String, callback: (ExtractorLink) -> Unit): Boolean {
@@ -526,7 +567,7 @@ class EpornerGayProvider : MainAPI() {
             "cougar", "granny", "boy and girl", "guy and girl", "man and woman",
         )
         if (item.url.isBlank() || item.title.isBlank() || excluded.any(text::contains)) return false
-        if (item.source == Source.GAY0DAY.name) return true
+        if (item.source == Source.GAYPORNTUBE.name || item.source == Source.GAY0DAY.name) return true
         val maleSignals = listOf(
             " man", "men ", " male", " guy", "guys", " boy", "boys", " gay", " cock", "dick",
             " daddy", "daddies", " bear", " cub", " hunk", " stud", " jock", " twink", "bro ",
