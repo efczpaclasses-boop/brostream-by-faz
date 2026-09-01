@@ -25,6 +25,7 @@ class EpornerGayProvider : MainAPI() {
     private val userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) " +
         "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36"
     private val headers = mapOf("User-Agent" to userAgent, "Accept" to "text/html,application/xhtml+xml")
+    private val repeatedVideoIds = setOf("772308", "1739999")
     private val pornHubCookies = mapOf("hasVisited" to "1", "accessAgeDisclaimerPH" to "1", "platform" to "pc")
 
     private enum class Feed { FRESH, AMATEUR, TOP, LONG, BOYFRIEND, TRENDY, PORNONE }
@@ -40,32 +41,32 @@ class EpornerGayProvider : MainAPI() {
 
     override val mainPage = mainPageOf(
         "GPT|/most-viewed/" to "🔥 Most Watched Gay Men",
-        "GPT|/channels/5/amature/page1.html" to "🏠 Fresh Amateur Today",
+        "GPT|/search/videos/amateur-men/page1.html" to "🏠 Fresh Amateur Today",
         "CURATED" to "⭐ MyVidster Gay-Men Picks",
-        "GPT|/search/videos/homemade/page1.html" to "🎥 Homemade & Non-Studio",
-        "GPT|/channels/16/latino/page1.html" to "🌶️ Latino Men",
-        "GPT|/search/videos/brazilian/page1.html" to "🇧🇷 Brazilian Men",
-        "GPT|/channels/17/oral/page1.html" to "👄 Hottest Blowjobs",
+        "GPT|/search/videos/homemade-gay/page1.html" to "🎥 Homemade & Non-Studio",
+        "GPT|/search/videos/latino-men/page1.html" to "🌶️ Latino Men",
+        "GPT|/search/videos/brazilian-men/page1.html" to "🇧🇷 Brazilian Men",
+        "GPT|/search/videos/gay-blowjob/page1.html" to "👄 Hottest Blowjobs",
         "GPT|/search/videos/blowjob-compilation/page1.html" to "💦 Blowjob Compilations",
         "GPT|/search/videos/cum-compilation/page1.html" to "💦 Cum Compilations",
-        "GPT|/search/videos/party/page1.html" to "🎉 Party & Group Play",
+        "GPT|/search/videos/gay-party/page1.html" to "🎉 Party & Group Play",
         "GPT|/search/videos/pnp-slam/page1.html" to "🔥 PNP & Slam",
-        "GPT|/channels/18/muscle-boys/page1.html" to "💪 Muscle Men",
-        "GPT|/channels/12/frat-guys/page1.html" to "🔥 Frat Guys & Jocks",
-        "GPT|/channels/21/straight-boys/page1.html" to "Straight & Curious Guys",
-        "GPT|/channels/35/big-cocks/page1.html" to "Big Dick",
-        "GPT|/channels/7/bareback/page1.html" to "Bareback",
-        "GPT|/channels/14/group-sex/page1.html" to "Group & Orgies",
-        "GPT|/channels/34/solo/page1.html" to "Solo Men",
-        "GPT|/channels/40/public-outside/page1.html" to "Outdoor & Public",
-        "GPT|/channels/9/cum-shots/page1.html" to "Cumshots",
-        "GPT|/channels/13/glory-holes/page1.html" to "Gloryholes",
-        "GPT|/channels/44/handjob/page1.html" to "Handjobs",
-        "GPT|/channels/15/interracial/page1.html" to "Interracial Men",
-        "GPT|/channels/6/asian/page1.html" to "Asian Men",
-        "GPT|/channels/45/first-time/page1.html" to "First Time",
-        "GPT|/channels/19/web-cam/page1.html" to "Webcam & Creator-Made",
-        "GPT|/channels/41/voyeur/page1.html" to "Voyeur",
+        "GPT|/search/videos/muscle-men/page1.html" to "💪 Muscle Men",
+        "GPT|/search/videos/frat-jocks/page1.html" to "🔥 Frat Guys & Jocks",
+        "GPT|/search/videos/straight-curious-guys/page1.html" to "Straight & Curious Guys",
+        "GPT|/search/videos/big-cock-men/page1.html" to "Big Dick",
+        "GPT|/search/videos/gay-bareback/page1.html" to "Bareback",
+        "GPT|/search/videos/gay-group-orgy/page1.html" to "Group & Orgies",
+        "GPT|/search/videos/solo-male/page1.html" to "Solo Men",
+        "GPT|/search/videos/gay-outdoor-public/page1.html" to "Outdoor & Public",
+        "GPT|/search/videos/gay-cumshot/page1.html" to "Cumshots",
+        "GPT|/search/videos/gay-gloryhole/page1.html" to "Gloryholes",
+        "GPT|/search/videos/gay-handjob/page1.html" to "Handjobs",
+        "GPT|/search/videos/gay-interracial/page1.html" to "Interracial Men",
+        "GPT|/search/videos/asian-men-gay/page1.html" to "Asian Men",
+        "GPT|/search/videos/gay-first-time/page1.html" to "First Time",
+        "GPT|/search/videos/gay-webcam/page1.html" to "Webcam & Creator-Made",
+        "GPT|/search/videos/gay-voyeur/page1.html" to "Voyeur",
     )
 
     override suspend fun getMainPage(page: Int, request: MainPageRequest): HomePageResponse {
@@ -167,6 +168,7 @@ class EpornerGayProvider : MainAPI() {
         }
         return app.get("$mainUrl$pagedPath", headers = headers, timeout = 30).document
             .select("div.item.item-col[data-video-id]").mapNotNull { el ->
+                if (el.attr("data-video-id") in repeatedVideoIds) return@mapNotNull null
                 val a = el.selectFirst("a.image[href][title]") ?: return@mapNotNull null
                 val href = absolute(a.attr("href"), mainUrl) ?: return@mapNotNull null
                 if (!href.contains("/video/")) return@mapNotNull null
