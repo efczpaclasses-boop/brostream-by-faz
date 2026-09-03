@@ -1,0 +1,22 @@
+[
+    {
+        "iconUrl": "https://www.google.com/s2/favicons?domain=manporn.xxx&sz=%size%",
+        "fileHash": "sha256-f876fc3d6dad00ba3a20255915de2060776eaa6ec6ba8d2ed7856fd45949351a",
+        "apiVersion": 1,
+        "repositoryUrl": "https://github.com/efczpaclasses-boop/brostream-by-faz",
+        "fileSize": 33953,
+        "status": 3,
+        "language": "en",
+        "authors": [
+            "Faz"
+        ],
+        "tvTypes": [
+            "NSFW"
+        ],
+        "version": 20,
+        "internalName": "BroStreamFreshByFaz",
+        "description": "BroStream Fresh v20: clean multi-provider gay-men catalogue, deduplication, fallbacks and playback checks. Adults only.",
+        "url": "https://raw.githubusercontent.com/efczpaclasses-boop/brostream-by-faz/builds/BroStreamFreshByFaz.cs3",
+        "name": "BroStreamFreshByFaz"
+    }
+]
