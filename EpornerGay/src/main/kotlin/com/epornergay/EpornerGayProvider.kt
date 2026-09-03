@@ -189,7 +189,7 @@ class EpornerGayProvider : MainAPI() {
         }
     }
 
-    private fun simpleLoad(item: ItemData, data: String): LoadResponse =
+    private suspend fun simpleLoad(item: ItemData, data: String): LoadResponse =
         newMovieLoadResponse(item.title, data, TvType.NSFW, data) {
             posterUrl = item.poster
             tags = listOf("Gay Men", if (item.source == Source.CURATED.name) "MyVidster Pick" else item.source)
