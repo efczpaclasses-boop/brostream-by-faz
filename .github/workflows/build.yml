@@ -21,6 +21,7 @@ jobs:
       - name: Build extension and catalogue
         run: |
           chmod +x gradlew
+          python3 scripts/health_check.py
           ./gradlew BroStreamFreshByFaz:make makePluginsJson
           mkdir public
           cp EpornerGay/build/*.cs3 public/
