@@ -18,10 +18,11 @@ jobs:
           distribution: temurin
           java-version: "17"
       - uses: android-actions/setup-android@v3
+      - name: Verify catalogues and playback
+        run: python3 scripts/health_check.py
       - name: Build extension and catalogue
         run: |
           chmod +x gradlew
-          python3 scripts/health_check.py
           ./gradlew BroStreamFreshByFaz:make makePluginsJson
           mkdir public
           cp EpornerGay/build/*.cs3 public/
